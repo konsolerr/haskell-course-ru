@@ -150,6 +150,7 @@ intNegOne = Int Zero Neg
 
 -- n -> - n
 intNeg :: Int -> Int
+intNeg (Int Zero Pos) = Int Zero Pos
 intNeg (Int m Pos) = Int (m -. natOne) Neg
 intNeg (Int m Neg) = Int (Succ m) Pos
 
@@ -216,7 +217,7 @@ ratLt (Rat x y) (Rat z w) = intLt (x .*. (Int w Pos)) (z .*. (Int y Pos))
 
 infixl 7 %+, %-
 (%+) :: Rat -> Rat -> Rat
-(Rat x y) %+ (Rat z w) = Rat ( ( x .*. (Int w Pos) ) + (z .*. (Int y Pos) ) ) (y *. w)
+(Rat x y) %+ (Rat z w) = Rat ( ( x .*. (Int w Pos) ) .+. (z .*. (Int y Pos) ) ) (y *. w)
 
 (%-) :: Rat -> Rat -> Rat
 n %- m = n %+ (ratNeg m)
