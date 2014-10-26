@@ -20,79 +20,101 @@ data List a = Nil |  Cons a (List a) deriving (Show,Read)
 
 -- Длина списка
 length :: List a -> Nat
-length = undefined
+length Nil = Zero
+length (Cons _ x) = Succ (length x)
 
 -- Склеить два списка за O(length a)
 (++) :: List a -> List a -> List a
-a ++ b = undefined
+Nil ++ b = b
+(Cons a x) ++ b = Cons a (x ++ b)
 
 -- Список без первого элемента
 tail :: List a -> List a
-tail = undefined
+tail Nil = Nil
+tail (Cons _ x) = x
 
 -- Список без последнего элемента
 init :: List a -> List a
-init = undefined
+init (Cons a Nil) = (Cons a Nil)
+init (Cons a x) = init x
 
 -- Первый элемент
 head :: List a -> a
-head = undefined
+head Nil = error "head: empty list"
+head (Cons a _) = a
 
 -- Последний элемент
 last :: List a -> a
-last = undefined
+last Nil = error "last: empty list"
+last (Cons a Nil) = a
+last (Cons a x) = last x
 
 -- n первых элементов списка
 take :: Nat -> List a -> List a
-take = undefined
+take Zero x = Nil
+take x Nil = Nil
+take (Succ x) (Cons a l) = Cons a (take x l)
 
 -- Список без n первых элементов
 drop :: Nat -> List a -> List a
-drop = undefined
+drop Zero x = x
+drop x Nil = Nil
+drop (Succ x) (Cons _ l) = drop x l
 
 -- Оставить в списке только элементы удовлетворяющие p
 filter :: (a -> Bool) -> List a -> List a
-filter p = undefined
+filter p Nil = Nil
+filter p (Cons x l) = if' (p x) (Cons x (filter p l)) (filter p l)
 
 -- Обобщённая версия. Вместо "выбросить/оставить" p
 -- говорит "выбросить/оставить b".
 gfilter :: (a -> Maybe b) -> List a -> List b
-gfilter p = undefined
+gfilter p Nil = Nil
+gfilter p (Cons x l) = case (p x) of 
+                        Nothing -> gfilter p l
+                        Just b -> Cons b (gfilter p l)
 
 -- Копировать из списка в результат до первого нарушения предиката
 -- takeWhile (< 3) [1,2,3,4,1,2,3,4] == [1,2]
 takeWhile :: (a -> Bool) -> List a -> List a
-takeWhile = undefined
+takeWhile _ Nil = Nil
+takeWhile p (Cons x l) = if' (p x) (Cons x (takeWhile p l)) (Nil)
+
 
 -- Не копировать из списка в результат до первого нарушения предиката,
 -- после чего скопировать все элементы, включая первый нарушивший
 -- dropWhile (< 3) [1,2,3,4,1,2,3,4] == [3,4,1,2,3,4]
 dropWhile :: (a -> Bool) -> List a -> List a
-dropWhile = undefined
+dropWhile _ Nil = Nil
+dropWhile p (Cons x l) = if' (p x) (dropWhile p l) (Cons x l)
 
 -- Разбить список по предикату на (takeWhile p xs, dropWhile p xs),
 -- но эффективнее
 span :: (a -> Bool) -> List a -> Pair (List a) (List a)
-span p = undefined
+span _ Nil = Pair Nil Nil
+span p (Cons x l) = if' (p x) (let x = span p l in Pair (Cons x (fst x)) (snd x)) (Pair Nil (Cons x l))
+
 
 -- Разбить список по предикату на (takeWhile (not . p) xs, dropWhile (not . p) xs),
 -- но эффективнее
 break :: (a -> Bool) -> List a -> Pair (List a) (List a)
-break = undefined
+break p l = span (not . p) l
 
 -- n-ый элемент списка (считая с нуля)
 (!!) :: List a -> Nat -> a
 Nil !! n = error "!!: empty list"
-l  !! n = undefined
+Zero  !! n = head n
+(Succ x) !! n = x !! (tail n)
 
 -- Список задом на перёд
 reverse :: List a -> List a
-reverse = undefined
+reverse Nil = Nil
+reverse (Cons x l) = (reverse l) ++ (Cons x Nil)
 
 -- (*) Все подсписки данного списка
 subsequences :: List a -> List (List a)
 subsequences Nil = Cons Nil Nil
-subsequences (Cons x xs) = undefined
+subsequences (Cons x xs) = (subsequences xs) ++ (Cons x (subsequences xs))
 
 -- (*) Все перестановки элементов данного списка
 permutations :: List a -> List (List a)

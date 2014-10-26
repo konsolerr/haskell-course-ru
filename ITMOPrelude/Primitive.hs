@@ -248,3 +248,22 @@ example3'' a b c = ($) (gcd a) (gcd b c)
 example4  a b x = (gcd a (gcd b x))
 example4' a b = gcd a . gcd b
 
+
+--- Штуки чтобы тестить листы
+odd :: Nat -> Bool
+odd Zero = False
+odd (Succ x) = even x
+
+even :: Nat -> Bool
+even Zero = True
+even (Succ x) = odd x
+
+odd_maybe :: Nat -> Maybe Nat
+odd_maybe x = case (odd x) of
+                True -> Just x
+                False -> Nothing
+
+even_maybe :: Nat -> Maybe Nat
+even_maybe x = case (even x) of
+                True -> Just x
+                False -> Nothing
