@@ -86,7 +86,10 @@ natOne = Succ Zero -- 1
 
 -- Сравнивает два натуральных числа
 natCmp :: Nat -> Nat -> Tri
-natCmp = undefined
+natCmp Zero Zero = EQ
+natCmp Zero (Succ _) = LT
+natCmp (Succ _) Zero = GT
+natCmp (Succ n) (Succ m) = natCmp n m
 
 -- n совпадает с m 
 natEq :: Nat -> Nat -> Bool
@@ -111,7 +114,9 @@ Zero     +. m = m
 infixl 6 -.
 -- Вычитание для натуральных чисел
 (-.) :: Nat -> Nat -> Nat
-n -. m = undefined
+Zero -. _ = Zero
+m -. Zero = m
+(Succ n) -. (Succ m) = n -. m
 
 infixl 7 *.
 -- Умножение для натуральных чисел
@@ -121,83 +126,104 @@ Zero     *. m = Zero
 
 -- Целое и остаток от деления n на m
 natDivMod :: Nat -> Nat -> Pair Nat Nat
-natDivMod n m = undefined
+natDivMod n m = if' (natLt n m) (Pair Zero n) (let x = (natDivMod (n -. m) m) in Pair (Succ (fst x)) (snd x))
 
 natDiv n = fst . natDivMod n -- Целое
 natMod n = snd . natDivMod n -- Остаток
 
 -- Поиск GCD алгоритмом Евклида (должен занимать 2 (вычислителельная часть) + 1 (тип) строчки)
 gcd :: Nat -> Nat -> Nat
-gcd = undefined
+gcd n Zero = n
+gcd n m = if' (natLt n m) (gcd m n) (gcd m (natMod n m))
 
 -------------------------------------------
 -- Целые числа
 
 -- Требуется, чтобы представление каждого числа было единственным
-data Int = UNDEFINED deriving (Show,Read)
+-- lets assume Int Zero Neg == -1, Int natOne Neg = -2 and so on
+data Sign = Pos | Neg deriving (Show, Read)
+data Int = Int Nat Sign deriving (Show,Read)
 
-intZero   = undefined   -- 0
-intOne    = undefined     -- 1
-intNegOne = undefined -- -1
+intZero   = Int Zero Pos   -- 0
+intOne    = Int (Succ Zero) Pos     -- 1
+intNegOne = Int Zero Neg
 
 -- n -> - n
 intNeg :: Int -> Int
-intNeg = undefined
+intNeg (Int m Pos) = Int (m -. natOne) Neg
+intNeg (Int m Neg) = Int (Succ m) Pos
 
 -- Дальше также как для натуральных
 intCmp :: Int -> Int -> Tri
-intCmp = undefined
+intCmp (Int _ Pos) (Int _ Neg) = GT
+intCmp (Int _ Neg) (Int _ Pos) = LT
+intCmp (Int n Pos) (Int m Pos) = natCmp n m
+intCmp (Int n Neg) (Int m Neg) = natCmp m n
 
 intEq :: Int -> Int -> Bool
-intEq = undefined
+intEq (Int _ Pos) (Int _ Neg) = False
+intEq (Int _ Neg) (Int _ Pos) = False
+intEq (Int n Pos) (Int m Pos) = natEq n m
+intEq (Int n Neg) (Int m Neg) = natEq n m
 
 intLt :: Int -> Int -> Bool
-intLt = undefined
+intLt (Int _ Pos) (Int _ Neg) = False
+intLt (Int _ Neg) (Int _ Pos) = True
+intLt (Int n Pos) (Int m Pos) = natLt n m
+intLt (Int n Neg) (Int m Neg) = natLt m n
 
 infixl 6 .+., .-.
 -- У меня это единственный страшный терм во всём файле
 (.+.) :: Int -> Int -> Int
-n .+. m = undefined
+(Int n Pos) .+. (Int m Pos) = Int (m +. n) Pos
+(Int n Neg) .+. (Int m Neg) = Int (m +. n +. natOne) Neg
+(Int n Pos) .+. (Int m Neg) = if' (natLt m n) (Int (n -. m -. natOne) Pos) (Int (m -. n) Neg)
+(Int n Neg) .+. (Int m Pos) = (Int m Pos) .+. (Int n Neg)
 
 (.-.) :: Int -> Int -> Int
 n .-. m = n .+. (intNeg m)
 
 infixl 7 .*.
 (.*.) :: Int -> Int -> Int
-n .*. m = undefined
+(Int n Pos) .*. (Int m Pos) = Int (m *. n) Pos
+(Int n Neg) .*. (Int m Neg) = Int ( (m +. natOne) *. (n +. natOne) ) Pos
+(Int Zero Pos) .*. (Int _ Neg) = Int Zero Pos
+(Int n Pos) .*. (Int m Neg) = Int ( (m) *. (n +. natOne) ) Neg
+(Int n Neg) .*. (Int m Pos) = (Int m Pos) .*. (Int n Neg)
 
 -------------------------------------------
 -- Рациональные числа
 
-data Rat = Rat Int Nat
+data Rat = Rat Int Nat deriving (Show, Read)
 
 ratNeg :: Rat -> Rat
 ratNeg (Rat x y) = Rat (intNeg x) y
 
 -- У рациональных ещё есть обратные элементы
 ratInv :: Rat -> Rat
-ratInv = undefined
+ratInv (Rat (Int x Pos) y) = Rat (Int y Pos) x
+ratInv (Rat (Int x Neg) y) = Rat (Int (y -. natOne) Neg) (Succ x)
 
 -- Дальше как обычно
 ratCmp :: Rat -> Rat -> Tri
-ratCmp = undefined
+ratCmp (Rat x y) (Rat z w) = intCmp (x .*. (Int w Pos)) (z .*. (Int y Pos))
 
 ratEq :: Rat -> Rat -> Bool
-ratEq = undefined
+ratEq (Rat x y) (Rat z w) = intEq (x .*. (Int w Pos)) (z .*. (Int y Pos))
 
 ratLt :: Rat -> Rat -> Bool
-ratLt = undefined
+ratLt (Rat x y) (Rat z w) = intLt (x .*. (Int w Pos)) (z .*. (Int y Pos))
 
 infixl 7 %+, %-
 (%+) :: Rat -> Rat -> Rat
-n %+ m = undefined
+(Rat x y) %+ (Rat z w) = Rat ( ( x .*. (Int w Pos) ) + (z .*. (Int y Pos) ) ) (y *. w)
 
 (%-) :: Rat -> Rat -> Rat
 n %- m = n %+ (ratNeg m)
 
 infixl 7 %*, %/
 (%*) :: Rat -> Rat -> Rat
-n %* m = undefined
+(Rat x y) %* (Rat z w) = Rat ( x .*. z ) ( y *. w ) 
 
 (%/) :: Rat -> Rat -> Rat
 n %/ m = n %* (ratInv m)
@@ -220,3 +246,4 @@ example3'' a b c = ($) (gcd a) (gcd b c)
 -- И ещё эквивалентные определения
 example4  a b x = (gcd a (gcd b x))
 example4' a b = gcd a . gcd b
+
