@@ -92,7 +92,7 @@ dropWhile p (Cons x l) = if' (p x) (dropWhile p l) (Cons x l)
 -- но эффективнее
 span :: (a -> Bool) -> List a -> Pair (List a) (List a)
 span _ Nil = Pair Nil Nil
-span p (Cons x l) = if' (p x) (let x = span p l in Pair (Cons x (fst x)) (snd x)) (Pair Nil (Cons x l))
+span p (Cons x l) = if' (p x) (let t = span p l in (Pair (Cons x (fst t)) (snd t))) (Pair Nil (Cons x l))
 
 
 -- Разбить список по предикату на (takeWhile (not . p) xs, dropWhile (not . p) xs),
@@ -103,8 +103,8 @@ break p l = span (not . p) l
 -- n-ый элемент списка (считая с нуля)
 (!!) :: List a -> Nat -> a
 Nil !! n = error "!!: empty list"
-Zero  !! n = head n
-(Succ x) !! n = x !! (tail n)
+l !! Zero = head l
+l !! (Succ x) = (tail l) !! x
 
 -- Список задом на перёд
 reverse :: List a -> List a
@@ -114,7 +114,7 @@ reverse (Cons x l) = (reverse l) ++ (Cons x Nil)
 -- (*) Все подсписки данного списка
 subsequences :: List a -> List (List a)
 subsequences Nil = Cons Nil Nil
-subsequences (Cons x xs) = (subsequences xs) ++ (Cons x (subsequences xs))
+subsequences (Cons x xs) = (subsequences xs) ++ (map (Cons x) (subsequences xs))
 
 -- (*) Все перестановки элементов данного списка
 permutations :: List a -> List (List a)
@@ -173,7 +173,8 @@ finiteTimeTest = take (Succ $ Succ $ Succ $ Succ Zero) $ foldr (Cons) Nil $ repe
 
 -- Применяет f к каждому элементу списка
 map :: (a -> b) -> List a -> List b
-map f l = undefined
+map f Nil = Nil
+map f (Cons x l) = Cons (f x) (map f l)
 
 -- Склеивает список списков в список
 concat :: List (List a) -> List a
